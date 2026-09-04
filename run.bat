@@ -1,29 +1,21 @@
 @echo off
 chcp 65001 >nul
 echo ========================================
-echo   SMART LOCK - QUICK LAUNCHER
+echo   SMART LOCK - AUTO LAUNCHER ALL
 echo ========================================
-echo 1. Chạy Backend FastAPI (Uvicorn)
-echo 2. Chạy Web Admin (Vite Dev Server)
-echo 3. Chạy Menu Quản lý (manage.py)
-echo ========================================
-set /p choice="Chọn chức năng (1-3): "
+echo Đang tự động khởi động Backend và Web Admin...
 
-if "%choice%"=="1" (
-    echo Đang khởi động Backend...
-    cd /d %~dp0backend
-    call venv\Scripts\activate
-    uvicorn app.main:app --reload
-) else if "%choice%"=="2" (
-    echo Đang khởi động Web Admin...
-    cd /d %~dp0webapp\admin
-    npm run dev
-) else if "%choice%"=="3" (
-    echo Đang mở Menu quản lý DB...
-    cd /d %~dp0backend
-    call venv\Scripts\activate
-    python manage.py
-) else (
-    echo Lựa chọn không hợp lệ!
-)
+:: 1. Khởi động Backend FastAPI trong cửa sổ riêng
+start "Smart Lock Backend" cmd /k "cd /d %~dp0backend && call venv\Scripts\activate && uvicorn app.main:app --reload"
+
+:: 2. Khởi động Web Admin trong cửa sổ riêng
+start "Smart Lock Web Admin" cmd /k "cd /d %~dp0webapp\admin && npm run dev"
+
+echo.
+echo ========================================
+echo TẤT CẢ ĐÃ ĐƯỢC MỞ TỰ ĐỘNG!
+echo ========================================
+echo - Backend API: http://127.0.0.1:8000/docs
+echo - Web Admin:   http://localhost:5173
+echo.
 pause
