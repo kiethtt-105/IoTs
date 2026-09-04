@@ -1,0 +1,26 @@
+device:
+  id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  name: "Khóa cửa chính"
+  mac_address: "AA:BB:CC:DD:EE:01"
+  firmware_version: "1.2.0"
+  location: "Cửa chính"
+
+mqtt:
+  host: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+  client_id: "smartlock_sim_01"
+
+initial_state:
+  status: "locked"
+  battery_level: 87
+  door_status: "closed"
+  tamper_detected: false
+  rssi: -55
+
+simulation:
+  battery_drain_interval_sec: 120
+  battery_drain_amount: 1
+  telemetry_interval_sec: 15
+  auto_lock_after_sec: 10
