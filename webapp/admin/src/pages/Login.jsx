@@ -1,16 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("owner@example.com");
   const [password, setPassword] = useState("admin123");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Demo: bỏ qua auth thật
-    navigate("/");
+    setError("");
+    setLoading(true);
+    try {
+      await login(email, password);
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Đăng nhập thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,6 +40,11 @@ export default function Login() {
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl p-6 shadow-xl space-y-4"
         >
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2.5">
+              {error}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Email
@@ -38,6 +55,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
               required
+              disabled={loading}
             />
           </div>
           <div>
@@ -50,16 +68,19 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
               required
+              disabled={loading}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition-colors"
+            disabled={loading}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
-            Đăng nhập
+            {loading && <Loader2 size={18} className="animate-spin" />}
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
           <p className="text-xs text-center text-slate-400 pt-1">
-            Demo: dùng tài khoản có sẵn, không cần đúng mật khẩu
+            Demo: owner@example.com / admin123
           </p>
         </form>
       </div>

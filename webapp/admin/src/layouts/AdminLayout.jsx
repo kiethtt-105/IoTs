@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -26,9 +27,10 @@ const navItems = [
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    // TODO: clear auth
+    logout();
     navigate("/login");
   };
 
@@ -88,12 +90,21 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-slate-700">
+        <div className="p-4 border-t border-slate-700">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-medium">
+              {user?.full_name?.charAt(0) || "U"}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{user?.full_name || "User"}</div>
+              <div className="text-xs text-slate-400 truncate">{user?.email}</div>
+            </div>
+          </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors"
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
             Đăng xuất
           </button>
         </div>
@@ -101,31 +112,21 @@ export default function AdminLayout() {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 gap-4 sticky top-0 z-10">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 sticky top-0 z-10">
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-slate-100"
+            className="lg:hidden p-2 -ml-2 text-slate-600 hover:text-slate-900"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu size={20} />
+            <Menu size={22} />
           </button>
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold text-slate-800">
-              Hệ thống Khóa thông minh
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block text-right">
-              <div className="text-sm font-medium text-slate-800">Admin</div>
-              <div className="text-xs text-slate-500">owner@example.com</div>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-sm">
-              A
-            </div>
+          <div className="ml-auto text-sm text-slate-500">
+            {user?.role && (
+              <span className="capitalize px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                {user.role}
+              </span>
+            )}
           </div>
         </header>
-
-        {/* Content */}
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Outlet />
         </main>

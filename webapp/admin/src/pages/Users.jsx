@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Search, Plus, MoreVertical } from "lucide-react";
-import { users as mockUsers } from "../data/mock";
+import { useEffect, useState } from "react";
+import { Search, Plus, Loader2 } from "lucide-react";
+import { usersApi } from "../api/client";
 
 const roleColor = {
   owner: "bg-violet-100 text-violet-700",
@@ -14,14 +14,49 @@ const roleLabel = {
   guest: "Guest",
 };
 
-export default function Users() {
-  const [search, setSearch] = useState("");
+function formatDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("vi-VN");
+}
 
-  const filtered = mockUsers.filter(
+export default function Users() {
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    usersApi
+      .list()
+      .then((data) => {
+        if (!cancelled) setUsers(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filtered = users.filter(
     (u) =>
       u.full_name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-slate-500 gap-2">
+        <Loader2 className="animate-spin" size={20} />
+        Đang tải người dùng...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -35,6 +70,12 @@ export default function Users() {
           Thêm người dùng
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+          {error}
+        </div>
+      )}
 
       <div className="relative max-w-md">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -57,15 +98,14 @@ export default function Users() {
                 <th className="px-5 py-3 font-medium">Số điện thoại</th>
                 <th className="px-5 py-3 font-medium">Trạng thái</th>
                 <th className="px-5 py-3 font-medium">Ngày tạo</th>
-                <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/80">
+                <tr key={u.id} className="hover:bg-slate-50/50">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-sm shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-600">
                         {u.full_name.charAt(0)}
                       </div>
                       <div>
@@ -76,35 +116,35 @@ export default function Users() {
                   </td>
                   <td className="px-5 py-4">
                     <span
-                      className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${
-                        roleColor[u.role]
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        roleColor[u.role] || roleColor.guest
                       }`}
                     >
-                      {roleLabel[u.role]}
+                      {roleLabel[u.role] || u.role}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-slate-600">{u.phone}</td>
+                  <td className="px-5 py-4 text-slate-600">{u.phone || "—"}</td>
                   <td className="px-5 py-4">
-                    {u.is_active ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                        Disabled
-                      </span>
-                    )}
+                    <span
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        u.is_active
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {u.is_active ? "Hoạt động" : "Khóa"}
+                    </span>
                   </td>
-                  <td className="px-5 py-4 text-slate-600">{u.created_at}</td>
-                  <td className="px-5 py-4">
-                    <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600">
-                      <MoreVertical size={16} />
-                    </button>
-                  </td>
+                  <td className="px-5 py-4 text-slate-600">{formatDate(u.created_at)}</td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-5 py-10 text-center text-slate-400">
+                    Không tìm thấy người dùng
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
