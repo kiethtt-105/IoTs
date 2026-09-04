@@ -33,6 +33,7 @@ class MQTTClient:
         self.topic_status = f"smartlock/{device_id}/status"
         self.topic_access = f"smartlock/{device_id}/access"
         self.topic_ack = f"smartlock/{device_id}/ack"
+        self.topic_enroll = f"smartlock/{device_id}/enroll"
 
     def connect(self):
         logger.info(f"Connecting to MQTT broker {self.host}:{self.port} ...")
@@ -75,3 +76,7 @@ class MQTTClient:
         payload = {"command_id": command_id, "status": status, "message": message, "device_id": self.device_id}
         self.client.publish(self.topic_ack, json.dumps(payload), qos=1)
         logger.info(f"Published ACK → {status}")
+
+    def publish_enroll(self, payload: dict):
+        self.client.publish(self.topic_enroll, json.dumps(payload), qos=1)
+        logger.info(f"Published enroll → {self.topic_enroll}: {payload.get('card_uid')}")

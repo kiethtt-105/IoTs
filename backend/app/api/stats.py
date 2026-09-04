@@ -27,7 +27,7 @@ async def get_stats(
     ).scalar() or 0
     total_users = (await db.execute(select(func.count(User.id)))).scalar() or 0
 
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_access = (
         await db.execute(
             select(func.count(AccessLog.id)).where(AccessLog.created_at >= today_start)

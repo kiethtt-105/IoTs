@@ -25,6 +25,7 @@ class CommandType(str, enum.Enum):
     unlock = "unlock"
     reboot = "reboot"
     ota_update = "ota_update"
+    enroll_card = "enroll_card"
 
 
 class CommandStatus(str, enum.Enum):

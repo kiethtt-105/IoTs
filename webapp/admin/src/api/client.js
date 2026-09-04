@@ -92,6 +92,18 @@ export const usersApi = {
 
 export const cardsApi = {
   list: () => api("/cards"),
+  enroll: (device_id, timeout_sec = 30) =>
+    api("/cards/enroll", {
+      method: "POST",
+      body: JSON.stringify({ device_id, timeout_sec }),
+    }),
+  pollEnroll: (command_id) => api(`/cards/enroll/${command_id}`),
+  create: (data) =>
+    api("/cards", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  remove: (id) => api(`/cards/${id}`, { method: "DELETE" }),
 };
 
 export const logsApi = {

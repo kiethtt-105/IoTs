@@ -4,7 +4,7 @@ Smart Lock Sensor Simulator
 Giả lập: WiFi (MQTT) + BLE + NFC + PIN
 """
 
-import loggingcd D:\.GitHub\IoTs\backend
+import logging
 import sys
 import threading
 import time
@@ -75,6 +75,9 @@ class SensorSimulator:
 
         self._running = False
         self._auto_lock_timer = None
+        self._enroll_mode = False
+        self._enroll_command_id = None
+        self._enroll_timeout_timer = None
 
     def handle_command(self, payload: dict):
         command = payload.get("command")
@@ -102,6 +105,23 @@ class SensorSimulator:
                 self.device.firmware_version = new_version
                 self.mqtt.publish_ack(command_id, "acked", f"OTA to {new_version} success")
                 self._publish_telemetry()
+            elif command == "enroll_card":
+                timeout = int(payload.get("timeout_sec", 30))
+                self._enroll_mode = True
+                self._enroll_command_id = command_id
+                console.print(f"[bold magenta]📇 ENROLL MODE — chờ quét thẻ NFC ({timeout}s)...[/]")
+                console.print("[dim]  → Dùng menu [1] hoặc [2] để giả lập chạm thẻ, hoặc [9] nhập UID[/]")
+                self.mqtt.publish_ack(command_id, "acked", f"Enroll mode active for {timeout}s")
+                if self._enroll_timeout_timer and self._enroll_timeout_timer.is_alive():
+                    self._enroll_timeout_timer.cancel()
+                def _timeout():
+                    if self._enroll_mode:
+                        self._enroll_mode = False
+                        console.print("[yellow]⏱️  Enroll timeout — thoát chế độ quét thẻ[/]")
+                        self.mqtt.publish_ack(command_id, "failed", "enroll_timeout")
+                self._enroll_timeout_timer = threading.Timer(timeout, _timeout)
+                self._enroll_timeout_timer.daemon = True
+                self._enroll_timeout_timer.start()
             else:
                 self.mqtt.publish_ack(command_id, "failed", f"Unknown command: {command}")
             self.print_status()
@@ -111,6 +131,23 @@ class SensorSimulator:
 
     def simulate_nfc_tap(self, card_uid: str):
         console.print(f"\n[bold magenta]📇 NFC Tap:[/] {card_uid}")
+        if getattr(self, "_enroll_mode", False):
+            self._enroll_mode = False
+            if self._enroll_timeout_timer and self._enroll_timeout_timer.is_alive():
+                self._enroll_timeout_timer.cancel()
+            console.print(f"[bold green]✓ Đã quét thẻ enroll: {card_uid}[/]")
+            self.device.add_card(card_uid)
+            payload = {
+                "device_id": self.device.device_id,
+                "command_id": self._enroll_command_id,
+                "card_uid": card_uid,
+                "event": "card_scanned",
+                "timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+            }
+            self.mqtt.publish_enroll(payload)
+            self.mqtt.publish_ack(self._enroll_command_id or "unknown", "acked", f"card_scanned:{card_uid}")
+            self.print_status()
+            return None
         event = self.device.unlock(AccessMethod.NFC_CARD, card_uid=card_uid)
         self._publish_access(event)
         if event.result == AccessResult.SUCCESS:
