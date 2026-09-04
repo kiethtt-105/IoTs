@@ -18,7 +18,7 @@ from rich.table import Table
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from device import AccessMethod, AccessResult, DeviceStatus, SmartLockDevice
+from device import AccessMethod, AccessResult, DeviceStatus, DoorStatus, SmartLockDevice
 from mqtt_client import MQTTClient
 
 colorama_init(autoreset=True)
@@ -53,7 +53,7 @@ class SensorSimulator:
             location=dev_cfg["location"],
             status=DeviceStatus(init["status"]),
             battery_level=init["battery_level"],
-            door_status=init["door_status"],
+            door_status=DoorStatus(init["door_status"]),   # ← chỉ giữ dòng này
             tamper_detected=init["tamper_detected"],
             rssi=init["rssi"],
         )
