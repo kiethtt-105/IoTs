@@ -1,2 +1,3 @@
 2026-09-04 20:50:33,424 [INFO] mqtt_client: Connecting to MQTT broker localhost:1883 ...
 2026-09-04 20:50:35,281 [WARNING] mqtt_client: MQTT disconnected: Unspecified error
+2026-09-04 20:56:47,834 [INFO] mqtt_client: MQTT disconnected
