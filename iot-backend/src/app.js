@@ -6,6 +6,8 @@ const { globalLimiter } = require("./middleware/rateLimit");
 const authRoutes = require("./routes/auth.routes");
 const sensorRoutes = require("./routes/sensor.routes");
 const doorRoutes = require("./routes/door.routes");
+const sseRoutes = require("./routes/sse.routes");
+const ruleRoutes = require("./routes/rule.routes");
 
 const app = express();
 
@@ -21,6 +23,8 @@ app.use(globalLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/sensors", sensorRoutes);
 app.use("/api/door", doorRoutes);
+app.use("/api/events", sseRoutes);
+app.use("/api/rules", ruleRoutes);
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 

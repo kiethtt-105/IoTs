@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bảng điều khiển — Nhà thông minh</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== MÀN HÌNH ĐĂNG NHẬP ===== -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-mark">◈</div>
+    <h1>Bảng điều khiển nhà thông minh</h1>
+    <p class="login-sub">Đăng nhập để xem giám sát và điều khiển thiết bị</p>
+    <form id="loginForm">
+      <label for="username">Tên đăng nhập</label>
+      <input type="text" id="username" required autocomplete="username" />
+      <label for="password">Mật khẩu</label>
+      <input type="password" id="password" required autocomplete="current-password" />
+      <button type="submit">Đăng nhập</button>
+      <p id="loginError" class="login-error" hidden></p>
+    </form>
+  </div>
+</div>
+
+<!-- ===== ỨNG DỤNG CHÍNH ===== -->
+<div id="app" class="app" hidden>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">◈</span>
+      <span class="brand-name">Nhà thông minh</span>
+    </div>
+    <nav>
+      <button class="nav-item active" data-view="overview">Tổng quan</button>
+      <button class="nav-item" data-view="history">Lịch sử cảm biến</button>
+      <button class="nav-item" data-view="door">Cửa &amp; Thẻ NFC</button>
+      <button class="nav-item" data-view="rules">Luật tự động</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="conn-status" id="connStatus">
+        <span class="dot"></span>
+        <span id="connLabel">Đang kết nối…</span>
+      </div>
+      <div class="user-box">
+        <span id="userLabel">—</span>
+        <button id="logoutBtn" title="Đăng xuất">Thoát</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ---- TỔNG QUAN ---- -->
+    <section id="view-overview" class="view active">
+      <header class="view-header">
+        <h2>Tổng quan thiết bị</h2>
+        <span class="device-pill" id="devicePill">esp32-demo-01</span>
+      </header>
+
+      <div class="sensor-grid">
+        <div class="sensor-tile" data-metric="temperature">
+          <span class="sensor-label">Nhiệt độ</span>
+          <span class="sensor-value"><span id="val-temperature">—</span><small>°C</small></span>
+          <span class="sensor-time" id="time-temperature">chưa có dữ liệu</span>
+        </div>
+        <div class="sensor-tile" data-metric="humidity">
+          <span class="sensor-label">Độ ẩm</span>
+          <span class="sensor-value"><span id="val-humidity">—</span><small>%</small></span>
+          <span class="sensor-time" id="time-humidity">chưa có dữ liệu</span>
+        </div>
+        <div class="sensor-tile" data-metric="gas_level">
+          <span class="sensor-label">Nồng độ khí gas</span>
+          <span class="sensor-value"><span id="val-gas_level">—</span><small>ppm</small></span>
+          <span class="sensor-time" id="time-gas_level">chưa có dữ liệu</span>
+        </div>
+        <div class="sensor-tile" data-metric="motion">
+          <span class="sensor-label">Chuyển động</span>
+          <span class="sensor-value"><span id="val-motion">—</span></span>
+          <span class="sensor-time" id="time-motion">chưa có dữ liệu</span>
+        </div>
+      </div>
+
+      <div class="panel-row">
+        <div class="panel chart-panel">
+          <div class="panel-title">Nhiệt độ &amp; độ ẩm — 24 giờ gần nhất</div>
+          <canvas id="overviewChart" height="110"></canvas>
+        </div>
+        <div class="panel activity-panel">
+          <div class="panel-title">Hoạt động gần đây</div>
+          <ul id="activityFeed" class="activity-feed">
+            <li class="activity-empty">Chưa có sự kiện nào</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- LỊCH SỬ CẢM BIẾN ---- -->
+    <section id="view-history" class="view">
+      <header class="view-header">
+        <h2>Lịch sử cảm biến</h2>
+        <select id="historyRange">
+          <option value="6">6 giờ qua</option>
+          <option value="24" selected>24 giờ qua</option>
+          <option value="72">3 ngày qua</option>
+          <option value="168">7 ngày qua</option>
+        </select>
+      </header>
+      <div class="panel">
+        <canvas id="historyChart" height="90"></canvas>
+      </div>
+      <div class="panel">
+        <canvas id="gasChart" height="90"></canvas>
+      </div>
+    </section>
+
+    <!-- ---- CỬA & NFC ---- -->
+    <section id="view-door" class="view">
+      <header class="view-header">
+        <h2>Cửa &amp; Thẻ NFC</h2>
+      </header>
+
+      <div class="panel door-control">
+        <div>
+          <div class="panel-title">Mở cửa từ xa</div>
+          <p class="panel-sub">Chỉ tài khoản vai trò <strong>chủ nhà</strong> mới thực hiện được thao tác này.</p>
+        </div>
+        <button id="openDoorBtn" class="btn-primary">Mở cửa</button>
+      </div>
+      <p id="doorMsg" class="door-msg" hidden></p>
+
+      <div class="panel">
+        <div class="panel-title">Lịch sử ra vào</div>
+        <table class="data-table" id="doorLogTable">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Phương thức</th>
+              <th>Mã thẻ / Người dùng</th>
+              <th>Trạng thái</th>
+              <th>Lý do</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="5" class="empty-row">Chưa có dữ liệu</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---- LUẬT TỰ ĐỘNG ---- -->
+    <section id="view-rules" class="view">
+      <header class="view-header">
+        <h2>Luật tự động</h2>
+      </header>
+      <div class="panel">
+        <table class="data-table" id="rulesTable">
+          <thead>
+            <tr>
+              <th>Tên luật</th>
+              <th>Điều kiện</th>
+              <th>Hành động</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="4" class="empty-row">Đang tải…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="config.js?v=2"></script>
+<script src="api.js?v=2"></script>
+<script src="app.js?v=2"></script>
+</body>
+</html>

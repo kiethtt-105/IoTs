@@ -1,6 +1,7 @@
 const mqtt = require("mqtt");
 const pool = require("../config/db");
 const { evaluateRules } = require("../rules/ruleEngine");
+const { broadcast } = require("../sse");
 require("dotenv").config();
 
 // Ket noi MQTT qua TLS (mqtts://) -> doi pho moi de doa #2, #3 trong bao cao
@@ -52,6 +53,9 @@ async function handleSensorData(deviceUid, data) {
     [device.id, data.temperature, data.humidity, data.gas_level, data.motion || false]
   );
 
+  // Day realtime xuong dashboard qua SSE -> khong can bam F5 (yeu cau Lop 5)
+  broadcast("sensor_update", { device_uid: deviceUid, ...data, recorded_at: new Date().toISOString() });
+
   // Sau khi luu, cham luat trong rule engine (Lop 3: >=3 luat cau hinh duoc)
   await evaluateRules(device.id, deviceUid, data, publishCommand);
 }
@@ -76,6 +80,7 @@ async function handleNfcScan(deviceUid, data) {
       [device.id, card_uid, card.owner_id]
     );
     publishCommand(deviceUid, { target: "door", command: "OPEN" });
+    broadcast("door_event", { device_uid: deviceUid, method: "nfc", card_uid, status: "success", created_at: new Date().toISOString() });
     console.log(`[NFC] The hop le ${card_uid} -> mo cua ${deviceUid}`);
   } else {
     await pool.query(
@@ -83,6 +88,7 @@ async function handleNfcScan(deviceUid, data) {
       [device.id, card_uid]
     );
     publishCommand(deviceUid, { target: "buzzer", command: "ALERT" });
+    broadcast("door_event", { device_uid: deviceUid, method: "nfc", card_uid, status: "denied", created_at: new Date().toISOString() });
     console.warn(`[NFC] The LA ${card_uid} bi tu choi tren ${deviceUid}`);
   }
 }

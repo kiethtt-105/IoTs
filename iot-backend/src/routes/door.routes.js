@@ -3,6 +3,7 @@ const pool = require("../config/db");
 const { authenticate, authorize } = require("../middleware/auth");
 const { doorActionLimiter } = require("../middleware/rateLimit");
 const { publishCommand } = require("../mqtt/mqttClient");
+const { broadcast } = require("../sse");
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.post("/open", authenticate, authorize("chunha"), doorActionLimiter, async
     );
 
     publishCommand(device_uid, { target: "door", command: "OPEN" });
+    broadcast("door_event", { device_uid, method: "app", status: "success", created_at: new Date().toISOString() });
     res.json({ message: "Da gui lenh mo cua" });
   } catch (err) {
     console.error(err);
