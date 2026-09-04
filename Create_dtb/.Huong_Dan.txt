@@ -1,0 +1,3 @@
+cd /d D:\.GitHub\IoTs\backend
+venv\Scripts\activate
+python manage.py

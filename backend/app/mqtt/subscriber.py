@@ -12,19 +12,31 @@ settings = get_settings()
 
 
 def start_mqtt_subscriber(loop: asyncio.AbstractEventLoop):
-    """Chạy MQTT subscriber trong background thread"""
+    """Chạy MQTT subscriber trong background thread.
+
+    Nguồn dữ liệu (simulator / real / both) cấu hình qua data_source.json
+    (menu manage.py mục 6). Cùng topic prefix smartlock/{device_id}/...
+    Backend phân biệt thiết bị theo device_id đã đăng ký trong bảng devices.
+    """
     try:
         import paho.mqtt.client as mqtt
     except ImportError:
         logger.warning("paho-mqtt not installed")
         return
 
+    try:
+        from app.data_source import current_mode, describe
+        logger.info("Data source mode: %s — %s", current_mode(), describe())
+    except Exception:
+        pass
+
     def on_connect(client, userdata, flags, reason_code, properties=None):
         if reason_code == 0:
+            # Cùng prefix cho simulator và thiết bị thật — phân biệt bằng device_id
             client.subscribe("smartlock/+/status", qos=1)
             client.subscribe("smartlock/+/access", qos=1)
             client.subscribe("smartlock/+/ack", qos=1)
-            logger.info("MQTT subscriber connected & subscribed")
+            logger.info("MQTT subscriber connected & subscribed (simulator + real ready)")
         else:
             logger.error(f"MQTT subscribe connect failed: {reason_code}")
 

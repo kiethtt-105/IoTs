@@ -1,0 +1,15 @@
+{
+  "mode": "simulator",
+  "simulator": {
+    "enabled": true,
+    "mqtt_topic_prefix": "smartlock",
+    "note": "Nhận telemetry/access từ sensor-simulator (MQTT)"
+  },
+  "real_device": {
+    "enabled": false,
+    "mqtt_topic_prefix": "smartlock",
+    "note": "Thiết bị thật (ESP32...) — bật khi có hardware",
+    "device_ids": []
+  },
+  "description": "mode=simulator | real | both. Backend MQTT dùng chung prefix; phân biệt bằng device_id đăng ký trong bảng devices."
+}
