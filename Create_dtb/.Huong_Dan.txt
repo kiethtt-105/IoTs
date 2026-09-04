@@ -1,3 +1,25 @@
 cd /d D:\.GitHub\IoTs\backend
 venv\Scripts\activate
 python manage.py
+
+
+
+Terminal 1 — Backend
+--
+cd /d D:\.GitHub\IoTs\backend
+venv\Scripts\activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+Terminal 2 — Sensor simulator
+--
+cd /d D:\.GitHub\IoTs\sensor-simulator
+venv\Scripts\activate
+python src\main.py
+
+Terminal 3 — Web
+--
+cd /d D:\.GitHub\IoTs\webapp\admin
+npm run dev
+
+Khởi động lại PostgreSQL Service
+net start postgresql-x64-18

@@ -26,7 +26,7 @@ CREATE TYPE door_status AS ENUM ('closed', 'open');
 
 CREATE TYPE notification_type AS ENUM ('unlock_success', 'unlock_failed', 'tamper', 'low_battery', 'offline');
 
-CREATE TYPE command_type AS ENUM ('lock', 'unlock', 'reboot', 'ota_update');
+CREATE TYPE command_type AS ENUM ('lock', 'unlock', 'reboot', 'ota_update', 'enroll_card');
 
 CREATE TYPE command_status AS ENUM ('pending', 'sent', 'acked', 'failed');
 

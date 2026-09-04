@@ -10,6 +10,7 @@ import threading
 import time
 from pathlib import Path
 
+import requests
 import yaml
 from colorama import Fore, Style, init as colorama_init
 from rich.console import Console
@@ -44,6 +45,8 @@ class SensorSimulator:
         init = self.config["initial_state"]
         mqtt_cfg = self.config["mqtt"]
         self.sim_cfg = self.config["simulation"]
+        self.backend_cfg = self.config.get("backend") or {}
+        self._config_path = config_path
 
         self.device = SmartLockDevice(
             device_id=dev_cfg["id"],
@@ -53,7 +56,7 @@ class SensorSimulator:
             location=dev_cfg["location"],
             status=DeviceStatus(init["status"]),
             battery_level=init["battery_level"],
-            door_status=DoorStatus(init["door_status"]),   # ← chỉ giữ dòng này
+            door_status=DoorStatus(init["door_status"]),
             tamper_detected=init["tamper_detected"],
             rssi=init["rssi"],
         )
@@ -78,6 +81,77 @@ class SensorSimulator:
         self._enroll_mode = False
         self._enroll_command_id = None
         self._enroll_timeout_timer = None
+        self._registered = False
+
+    # ------------------------------------------------------------------
+    # Đăng ký khóa lên Backend (giống pair WiFi/BLE lần đầu)
+    # ------------------------------------------------------------------
+    def register_device(self):
+        """Gọi API backend để thêm khóa (device) + đầu đọc đi kèm."""
+        base = (self.backend_cfg.get("base_url") or "http://localhost:8000").rstrip("/")
+        email = self.backend_cfg.get("email") or "kieth@admin.vn"
+        password = self.backend_cfg.get("password") or "109002"
+
+        console.print("\n[bold cyan]📡 Đăng ký khóa lên Backend (WiFi/API)...[/]")
+        console.print(f"[dim]  API: {base}[/]")
+        console.print(f"[dim]  Device ID: {self.device.device_id}[/]")
+        console.print(f"[dim]  MAC: {self.device.mac_address}[/]")
+
+        try:
+            # 1. Login lấy token
+            r = requests.post(
+                f"{base}/api/auth/login",
+                json={"email": email, "password": password},
+                timeout=8,
+            )
+            if r.status_code != 200:
+                console.print(f"[red]✗ Login thất bại ({r.status_code}): {r.text}[/]")
+                console.print("[yellow]  Kiểm tra backend đã chạy chưa, và email/password trong config/device.yaml[/]")
+                return False
+            data = r.json()
+            token = data.get("access_token")
+            if not token:
+                console.print(f"[red]✗ Không nhận được access_token: {data}[/]")
+                return False
+            headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+            # 2. Đăng ký device (id cố định để MQTT topic khớp)
+            payload = {
+                "id": self.device.device_id,
+                "name": self.device.name,
+                "location": self.device.location,
+                "mac_address": self.device.mac_address,
+                "firmware_version": self.device.firmware_version,
+            }
+            r2 = requests.post(f"{base}/api/devices", json=payload, headers=headers, timeout=8)
+
+            if r2.status_code in (200, 201):
+                out = r2.json()
+                self._registered = True
+                console.print(f"[bold green]✓ Đã đăng ký khóa thành công![/]")
+                console.print(f"  Tên      : {out.get('name')}")
+                console.print(f"  ID       : {out.get('id')}")
+                console.print(f"  MAC      : {out.get('mac_address')}")
+                console.print(f"  Chủ sở hữu: {out.get('owner_name')}")
+                console.print("[dim]  → Refresh trang Thiết bị / Thẻ NFC trên web để thấy khóa.[/]")
+                return True
+
+            # MAC đã tồn tại → backend trả device cũ (idempotent)
+            if r2.status_code == 400 and "already" in (r2.text or "").lower():
+                console.print(f"[yellow]⚠ Thiết bị có thể đã tồn tại: {r2.text}[/]")
+                return False
+
+            console.print(f"[red]✗ Đăng ký thất bại ({r2.status_code}): {r2.text}[/]")
+            return False
+
+        except requests.exceptions.ConnectionError:
+            console.print(f"[red]✗ Không kết nối được Backend tại {base}[/]")
+            console.print("[yellow]  Hãy chạy backend: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000[/]")
+            return False
+        except Exception as e:
+            logger.exception(e)
+            console.print(f"[red]✗ Lỗi: {e}[/]")
+            return False
 
     def handle_command(self, payload: dict):
         command = payload.get("command")
@@ -114,11 +188,13 @@ class SensorSimulator:
                 self.mqtt.publish_ack(command_id, "acked", f"Enroll mode active for {timeout}s")
                 if self._enroll_timeout_timer and self._enroll_timeout_timer.is_alive():
                     self._enroll_timeout_timer.cancel()
+
                 def _timeout():
                     if self._enroll_mode:
                         self._enroll_mode = False
                         console.print("[yellow]⏱️  Enroll timeout — thoát chế độ quét thẻ[/]")
                         self.mqtt.publish_ack(command_id, "failed", "enroll_timeout")
+
                 self._enroll_timeout_timer = threading.Timer(timeout, _timeout)
                 self._enroll_timeout_timer.daemon = True
                 self._enroll_timeout_timer.start()
@@ -244,6 +320,7 @@ class SensorSimulator:
         table.add_row("Firmware", d.firmware_version)
         table.add_row("Cards", ", ".join(d.allowed_cards) or "(none)")
         table.add_row("Location", d.location)
+        table.add_row("Đăng ký BE", "✓ Đã đăng ký" if self._registered else "Chưa (chọn [A])")
         console.print(Panel(table, expand=False))
 
     def _telemetry_loop(self):
@@ -287,6 +364,7 @@ class SensorSimulator:
     def _interactive_menu(self):
         menu = """
 [bold cyan]═══ MENU GIẢ LẬP ═══[/]
+  [A] Thêm khóa / Đăng ký thiết bị lên Backend  ← [mới]
   [1] NFC Tap (thẻ hợp lệ)
   [2] NFC Tap (thẻ lạ)
   [3] BLE Unlock (App gần)
@@ -301,11 +379,13 @@ class SensorSimulator:
         while self._running:
             console.print(menu)
             try:
-                choice = input(f"{Fore.CYAN}Chọn > {Style.RESET_ALL}").strip()
+                choice = input(f"{Fore.CYAN}Chọn > {Style.RESET_ALL}").strip().upper()
             except (EOFError, KeyboardInterrupt):
                 break
 
-            if choice == "1":
+            if choice == "A":
+                self.register_device()
+            elif choice == "1":
                 self.simulate_nfc_tap("04A1B2C3D4E5F6")
             elif choice == "2":
                 self.simulate_nfc_tap("FFFFFFFFFFFF")

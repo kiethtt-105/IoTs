@@ -22,12 +22,14 @@ class DeviceOut(BaseModel):
 
 
 class DeviceCreate(BaseModel):
+    """Tạo thiết bị. id / device_type_id / owner_id đều optional để simulator tự đăng ký."""
     name: str
     location: str | None = None
     mac_address: str
-    device_type_id: UUID
-    owner_id: UUID
+    device_type_id: UUID | None = None
+    owner_id: UUID | None = None
     firmware_version: str | None = "1.0.0"
+    id: UUID | None = None  # cho phép simulator giữ ID cố định (MQTT topic)
 
 
 class DeviceUpdate(BaseModel):

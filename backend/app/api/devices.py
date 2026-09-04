@@ -75,15 +75,51 @@ async def create_device(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    device = Device(
+    """Tạo / đăng ký thiết bị. Simulator có thể gửi sẵn id + mac để giữ topic MQTT."""
+    from app.models.device import DeviceType
+
+    # MAC trùng → trả về device đã có (idempotent đăng ký)
+    exists = await db.execute(select(Device).options(selectinload(Device.owner)).where(Device.mac_address == body.mac_address))
+    existing = exists.scalar_one_or_none()
+    if existing:
+        return to_device_out(existing)
+
+    # Nếu client gửi id sẵn có → kiểm tra
+    if body.id:
+        by_id = await db.execute(select(Device).where(Device.id == body.id))
+        if by_id.scalar_one_or_none():
+            raise HTTPException(400, f"Device id {body.id} already exists")
+
+    # device_type: dùng id gửi lên hoặc lấy/tạo mặc định smart_lock_nfc
+    type_id = body.device_type_id
+    if not type_id:
+        r = await db.execute(select(DeviceType).where(DeviceType.code == "smart_lock_nfc"))
+        dt = r.scalar_one_or_none()
+        if not dt:
+            dt = DeviceType(
+                code="smart_lock_nfc",
+                name="Khóa thông minh NFC",
+                capabilities={"nfc": True, "ble": True, "pin": True, "wifi": True},
+            )
+            db.add(dt)
+            await db.flush()
+        type_id = dt.id
+
+    owner_id = body.owner_id or user.id
+
+    kwargs = dict(
         name=body.name,
         location=body.location,
         mac_address=body.mac_address,
-        device_type_id=body.device_type_id,
-        owner_id=body.owner_id,
-        firmware_version=body.firmware_version,
+        device_type_id=type_id,
+        owner_id=owner_id,
+        firmware_version=body.firmware_version or "1.0.0",
         status=DeviceStatus.offline,
     )
+    if body.id:
+        kwargs["id"] = body.id
+
+    device = Device(**kwargs)
     db.add(device)
     await db.flush()
     await db.refresh(device, attribute_names=["owner"])

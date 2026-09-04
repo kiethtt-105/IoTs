@@ -12,6 +12,13 @@ mqtt:
   password: ""
   client_id: "smartlock_sim_01"
 
+# Backend API — dùng để đăng ký khóa (Thêm khóa trong menu)
+backend:
+  base_url: "http://localhost:8000"
+  # Tài khoản owner để đăng ký thiết bị (giống thiết bị thật pair lần đầu)
+  email: "kieth@admin.vn"
+  password: "109002"
+
 initial_state:
   status: "locked"
   battery_level: 87

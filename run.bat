@@ -3,13 +3,16 @@ chcp 65001 >nul
 echo ========================================
 echo   SMART LOCK - AUTO LAUNCHER ALL
 echo ========================================
-echo Đang tự động khởi động Backend và Web Admin...
+echo Đang tự động khởi động hệ thống...
 
 :: 1. Khởi động Backend FastAPI trong cửa sổ riêng
 start "Smart Lock Backend" cmd /k "cd /d %~dp0backend && call venv\Scripts\activate && uvicorn app.main:app --reload"
 
 :: 2. Khởi động Web Admin trong cửa sổ riêng
 start "Smart Lock Web Admin" cmd /k "cd /d %~dp0webapp\admin && npm run dev"
+
+:: 3. Khởi động Sensor Simulator trong cửa sổ riêng
+start "Smart Lock Sensor Simulator" cmd /k "cd /d %~dp0sensor-simulator && call venv\Scripts\activate && pip install requests && python src\main.py"
 
 echo.
 echo ========================================
