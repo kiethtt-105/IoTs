@@ -1,0 +1,5 @@
+1. Tạo Database mới bằng pgAdmin
+	Database: smart_lock
+2. Bật extension UUID
+	CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+3. Chạy 2 file trong thư mục
