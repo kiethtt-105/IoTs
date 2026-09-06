@@ -38,7 +38,7 @@ echo.
 echo ========================================
 echo TAT CA DA DUOC MO TU DONG!
 echo ========================================
-echo - MQTT Broker: localhost:1883
+echo - MQTT Broker: localhost:1883                              
 echo - Backend API: http://127.0.0.1:8000/docs
 echo - Web Admin:   http://localhost:5173
 echo - Manage.py:   cua so rieng da mo

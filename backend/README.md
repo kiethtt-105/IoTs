@@ -42,7 +42,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 | Email | Password | Role |
 |-------|----------|------|
-| owner@example.com | admin123 | owner |
+| admin@admin.vn | admin123 | owner |
 | member@example.com | member123 | member |
 | guest@example.com | guest123 | guest |
 

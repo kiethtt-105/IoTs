@@ -36,7 +36,7 @@ async def seed():
     async with Session() as db:
         # Users
         for u in [
-            User(id=OWNER_ID, full_name="Nguyễn Văn A", email="owner@example.com",
+            User(id=OWNER_ID, full_name="Nguyễn Văn A", email="admin@admin.vn",
                  phone="0901234567", password_hash=hash_password("admin123"), role=UserRole.owner),
             User(id=MEMBER_ID, full_name="Trần Thị B", email="member@example.com",
                  phone="0912345678", password_hash=hash_password("member123"), role=UserRole.member),
@@ -117,7 +117,7 @@ async def seed():
 
         await db.commit()
         print("✅ Seed data OK")
-        print("   Login: owner@example.com / admin123")
+        print("   Login: admin@admin.vn / admin123")
 
     await engine.dispose()
 

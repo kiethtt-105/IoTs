@@ -51,7 +51,7 @@ export const users = [
   {
     id: "u1",
     full_name: "Nguyễn Văn A",
-    email: "owner@example.com",
+    email: "admin@admin.vn",
     phone: "0901234567",
     role: "owner",
     is_active: true,

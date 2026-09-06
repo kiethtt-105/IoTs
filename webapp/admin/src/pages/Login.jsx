@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState("owner@example.com");
+  const [email, setEmail] = useState("admin@admin.vn");
   const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,7 +80,7 @@ export default function Login() {
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
           <p className="text-xs text-center text-slate-400 pt-1">
-            Demo: owner@example.com / admin123
+            Demo: admin@admin.vn / admin123
           </p>
         </form>
       </div>
