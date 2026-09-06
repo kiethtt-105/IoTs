@@ -16,8 +16,8 @@ mqtt:
 backend:
   base_url: "http://localhost:8000"
   # Tài khoản owner để đăng ký thiết bị (giống thiết bị thật pair lần đầu)
-  email: "kieth@admin.vn"
-  password: "109002"
+  email: "admin@admin.vn"
+  password: "admin123"
 
 initial_state:
   status: "locked"
