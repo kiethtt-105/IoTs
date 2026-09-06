@@ -103,6 +103,14 @@ export const cardsApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  /** Gán thẻ đã có trong DB vào khóa + thời hạn */
+  assign: (cardId, device_id, expires_at = null) =>
+    api(`/cards/${cardId}/assign`, {
+      method: "POST",
+      body: JSON.stringify({ device_id, expires_at }),
+    }),
+  revokeAssign: (cardId, deviceId) =>
+    api(`/cards/${cardId}/assign/${deviceId}`, { method: "DELETE" }),
   remove: (id) => api(`/cards/${id}`, { method: "DELETE" }),
 };
 

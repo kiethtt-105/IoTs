@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, time
-from sqlalchemy import String, Boolean, Integer, DateTime, Time, ForeignKey, Enum as SAEnum, func
+from sqlalchemy import String, Boolean, Integer, DateTime, Time, ForeignKey, Enum as SAEnum, func, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
@@ -47,11 +47,11 @@ class AccessResult(str, enum.Enum):
 
 
 class AccessCard(Base):
+    """Registry thẻ NFC global — lưu sau khi quét máy tổng."""
     __tablename__ = "access_cards"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    device_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("devices.id"))
     card_uid: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     label: Mapped[str | None] = mapped_column(String(50))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -59,11 +59,33 @@ class AccessCard(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     user = relationship("User", back_populates="access_cards")
-    device = relationship("Device", back_populates="access_cards")
+    device_accesses = relationship("CardDeviceAccess", back_populates="access_card", cascade="all, delete-orphan")
+
+
+class CardDeviceAccess(Base):
+    """Gán thẻ → khóa + thời hạn sử dụng trên khóa đó."""
+    __tablename__ = "card_device_access"
+    __table_args__ = (UniqueConstraint("access_card_id", "device_id", name="uq_card_device"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    access_card_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("access_cards.id"), nullable=False)
+    device_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("devices.id"), nullable=False)
+    granted_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime)  # NULL = không hết hạn
+    status: Mapped[PermissionStatus] = mapped_column(
+        SAEnum(PermissionStatus, name="permission_status", create_type=False),
+        default=PermissionStatus.active,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    access_card = relationship("AccessCard", back_populates="device_accesses")
+    device = relationship("Device", back_populates="card_accesses")
 
 
 class AccessPermission(Base):
+    """Phân quyền user cho từng khóa."""
     __tablename__ = "access_permissions"
+    __table_args__ = (UniqueConstraint("user_id", "device_id", name="uq_user_device_perm"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)

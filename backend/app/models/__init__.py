@@ -1,6 +1,6 @@
 from app.models.user import User
 from app.models.device import DeviceType, Device
-from app.models.access import AccessCard, AccessPermission, PinCode, Invite, AccessLog
+from app.models.access import AccessCard, CardDeviceAccess, AccessPermission, PinCode, Invite, AccessLog
 from app.models.telemetry import DeviceStatusLog, Notification, DeviceCommand
 
 __all__ = [
@@ -8,6 +8,7 @@ __all__ = [
     "DeviceType",
     "Device",
     "AccessCard",
+    "CardDeviceAccess",
     "AccessPermission",
     "PinCode",
     "Invite",

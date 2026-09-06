@@ -1,7 +1,18 @@
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel
-from app.models.access import AccessMethod, AccessResult
+from app.models.access import AccessMethod, AccessResult, PermissionStatus
+
+
+class CardDeviceAccessOut(BaseModel):
+    id: UUID
+    device_id: UUID
+    device_name: str | None = None
+    expires_at: datetime | None = None
+    status: PermissionStatus
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class AccessCardOut(BaseModel):
@@ -10,10 +21,9 @@ class AccessCardOut(BaseModel):
     card_uid: str
     user_id: UUID
     user_name: str | None = None
-    device_id: UUID | None
-    device_name: str | None = None
     is_active: bool
     issued_at: datetime
+    devices: list[CardDeviceAccessOut] = []
 
     model_config = {"from_attributes": True}
 

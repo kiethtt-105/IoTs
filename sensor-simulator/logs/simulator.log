@@ -31,3 +31,6 @@
 2026-09-06 14:45:51,771 [INFO] mqtt_client: Received command: {'command_id': 'e68d2543-2c87-4307-be06-6e5fef0479fb', 'command': 'unlock'}
 2026-09-06 14:45:52,055 [INFO] mqtt_client: Received command: {'command_id': '9bf80fcd-d91e-44e5-99e3-2714a0076138', 'command': 'lock'}
 2026-09-06 14:45:52,289 [INFO] mqtt_client: Received command: {'command_id': '9eb2177f-d1b0-4099-9fd4-323fbfa1f0f1', 'command': 'unlock'}
+2026-09-06 14:53:07,081 [INFO] mqtt_client: Connecting to MQTT broker localhost:1883 ...
+2026-09-06 14:53:07,095 [INFO] mqtt_client: MQTT connected successfully
+2026-09-06 14:53:07,097 [INFO] mqtt_client: Subscribed: smartlock/a1b2c3d4-e5f6-7890-abcd-ef1234567890/command

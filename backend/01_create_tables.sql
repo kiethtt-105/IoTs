@@ -2,6 +2,7 @@
 -- 01_create_tables.sql
 -- Database: smart_lock
 -- Tạo ENUM types + tất cả các bảng
+-- Cập nhật: thẻ global + gán khóa kèm thời hạn (card_device_access)
 -- =====================================================
 
 -- ==================== ENUM TYPES ====================
@@ -76,12 +77,13 @@ CREATE TABLE devices (
 );
 
 
--- ==================== 4. access_cards ====================
+-- ==================== 4. access_cards (registry global) ====================
+-- Thẻ lưu trong DB sau khi quét máy tổng. Không gắn cứng 1 khóa.
+-- Gán khóa + thời hạn nằm ở bảng card_device_access.
 
 CREATE TABLE access_cards (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID NOT NULL,
-    device_id       UUID,                           -- nullable: có thể dùng chung nhiều khóa qua permission
     card_uid        VARCHAR(50) NOT NULL UNIQUE,
     label           VARCHAR(50),
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
@@ -90,7 +92,24 @@ CREATE TABLE access_cards (
 );
 
 
--- ==================== 5. access_permissions ====================
+-- ==================== 5. card_device_access (gán thẻ → khóa + thời hạn) ====================
+-- Khi thiết lập trên chính khóa đó → cấp quyền cho khóa đó (expires_at).
+-- Thẻ đã có trong DB có thể gán thêm để mở các khóa khác.
+
+CREATE TABLE card_device_access (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    access_card_id      UUID NOT NULL,
+    device_id           UUID NOT NULL,
+    granted_by          UUID NOT NULL,
+    expires_at          TIMESTAMP,                  -- NULL = không hết hạn
+    status              permission_status NOT NULL DEFAULT 'active',
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (access_card_id, device_id)
+);
+
+
+-- ==================== 6. access_permissions (user ↔ khóa) ====================
+-- Phân quyền user cho từng khóa (theo loại / từng thiết bị).
 
 CREATE TABLE access_permissions (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -100,29 +119,30 @@ CREATE TABLE access_permissions (
     schedule_type           schedule_type NOT NULL DEFAULT 'always',
     valid_from              TIMESTAMP,
     valid_to                TIMESTAMP,
-    recurring_days          JSONB,                  -- ví dụ: ["mon","tue","wed"]
+    recurring_days          JSONB,
     recurring_start_time    TIME,
     recurring_end_time      TIME,
     status                  permission_status NOT NULL DEFAULT 'active',
-    created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, device_id)
 );
 
 
--- ==================== 6. pin_codes ====================
+-- ==================== 7. pin_codes ====================
 
 CREATE TABLE pin_codes (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     device_id       UUID NOT NULL,
-    user_id         UUID,                           -- nullable nếu là mã khách
+    user_id         UUID,
     pin_hash        VARCHAR(255) NOT NULL,
     type            pin_type NOT NULL DEFAULT 'permanent',
-    is_used         BOOLEAN NOT NULL DEFAULT FALSE,  -- cho one_time
+    is_used         BOOLEAN NOT NULL DEFAULT FALSE,
     expires_at      TIMESTAMP,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 
--- ==================== 7. invites ====================
+-- ==================== 8. invites ====================
 
 CREATE TABLE invites (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -136,14 +156,14 @@ CREATE TABLE invites (
 );
 
 
--- ==================== 8. access_logs ====================
+-- ==================== 9. access_logs ====================
 
 CREATE TABLE access_logs (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     device_id           UUID NOT NULL,
-    user_id             UUID,                       -- nullable nếu không xác định được
-    access_card_id      UUID,                       -- nullable
-    pin_code_id         UUID,                       -- nullable
+    user_id             UUID,
+    access_card_id      UUID,
+    pin_code_id         UUID,
     method              access_method NOT NULL,
     result              access_result NOT NULL,
     failure_reason      VARCHAR(100),
@@ -151,7 +171,7 @@ CREATE TABLE access_logs (
 );
 
 
--- ==================== 9. device_status_logs ====================
+-- ==================== 10. device_status_logs ====================
 
 CREATE TABLE device_status_logs (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -164,12 +184,12 @@ CREATE TABLE device_status_logs (
 );
 
 
--- ==================== 10. notifications ====================
+-- ==================== 11. notifications ====================
 
 CREATE TABLE notifications (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID NOT NULL,
-    device_id       UUID,                           -- nullable
+    device_id       UUID,
     type            notification_type NOT NULL,
     message         TEXT NOT NULL,
     is_read         BOOLEAN NOT NULL DEFAULT FALSE,
@@ -177,7 +197,7 @@ CREATE TABLE notifications (
 );
 
 
--- ==================== 11. device_commands ====================
+-- ==================== 12. device_commands ====================
 
 CREATE TABLE device_commands (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -48,5 +48,5 @@ class Device(Base):
 
     device_type = relationship("DeviceType", back_populates="devices")
     owner = relationship("User", back_populates="devices", foreign_keys=[owner_id])
-    access_cards = relationship("AccessCard", back_populates="device")
+    card_accesses = relationship("CardDeviceAccess", back_populates="device")
     access_logs = relationship("AccessLog", back_populates="device")
