@@ -1,0 +1,25 @@
+-- Smart Lock backup (Python)
+-- 20260906_142526
+
+-- TABLE access_cards
+-- (empty) access_cards
+-- TABLE access_logs
+-- (empty) access_logs
+-- TABLE access_permissions
+-- (empty) access_permissions
+-- TABLE device_commands
+-- (empty) device_commands
+-- TABLE device_status_logs
+-- (empty) device_status_logs
+-- TABLE device_types
+-- (empty) device_types
+-- TABLE devices
+-- (empty) devices
+-- TABLE invites
+-- (empty) invites
+-- TABLE notifications
+-- (empty) notifications
+-- TABLE pin_codes
+-- (empty) pin_codes
+-- TABLE users
+INSERT INTO "users" ("id", "full_name", "email", "phone", "password_hash", "role", "avatar_url", "is_active", "created_at", "updated_at") VALUES ('768ebeb4-a14f-4efc-b472-65fc3b1bf72a', 'Admin', 'admin@admin.vn', NULL, '$2b$12$EKktwkF5adqg6dw9wlRQDewe5oFnxe6u4oC./6pahE3PPj2Uliire', 'owner', NULL, TRUE, '2026-09-06 14:25:17.959728', '2026-09-06 14:25:17.959728');

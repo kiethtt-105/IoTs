@@ -1,4 +1,4 @@
-"""MQTT subscriber - nhận telemetry / access / ack / enroll từ thiết bị"""
+﻿"""MQTT subscriber - nháº­n telemetry / access / ack / enroll tá»« thiáº¿t bá»‹"""
 
 import asyncio
 import json
@@ -79,7 +79,7 @@ async def handle_mqtt_message(device_id: str, kind: str, payload: dict):
         logger.warning(f"Invalid device_id: {device_id}")
         return
 
-    # Enroll result — no DB needed, store in memory
+    # Enroll result â€” no DB needed, store in memory
     if kind == "enroll":
         cmd_id = payload.get("command_id") or "unknown"
         card_uid = payload.get("card_uid")
@@ -109,7 +109,7 @@ async def handle_mqtt_message(device_id: str, kind: str, payload: dict):
                         device.battery_level = payload["battery_level"]
                     if "firmware_version" in payload:
                         device.firmware_version = payload["firmware_version"]
-                    device.updated_at = datetime.now(timezone.utc)
+                    device.updated_at = datetime.utcnow()
 
                     log = DeviceStatusLog(
                         device_id=device_uuid,
@@ -168,7 +168,7 @@ async def handle_mqtt_message(device_id: str, kind: str, payload: dict):
                         if cmd:
                             if status == "acked":
                                 cmd.status = CommandStatus.acked
-                                cmd.acked_at = datetime.now(timezone.utc)
+                                cmd.acked_at = datetime.utcnow()
                             else:
                                 cmd.status = CommandStatus.failed
                             await db.commit()
@@ -178,3 +178,4 @@ async def handle_mqtt_message(device_id: str, kind: str, payload: dict):
         except Exception as e:
             await db.rollback()
             logger.exception(f"handle_mqtt_message error: {e}")
+

@@ -1,12 +1,12 @@
 {
-  "mode": "simulator",
+  "mode": "both",
   "simulator": {
     "enabled": true,
     "mqtt_topic_prefix": "smartlock",
     "note": "Nhận telemetry/access từ sensor-simulator (MQTT)"
   },
   "real_device": {
-    "enabled": false,
+    "enabled": true,
     "mqtt_topic_prefix": "smartlock",
     "note": "Thiết bị thật (ESP32...) — bật khi có hardware",
     "device_ids": []
